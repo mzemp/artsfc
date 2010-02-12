@@ -1,6 +1,8 @@
 #ifndef __SFC_H__
 #define __SFC_H__
 
+#include <iof.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -11,22 +13,12 @@ extern "C" {
 
 #define SLAB_DIM	0
 
-typedef struct sfc_info {
-
-    int nDim;
-    int num_grid;
-    int sfc_order;
-    int nBitsPerDim;
-    int nBits;
-    int max_sfc_index;
-    } SFC_INFO;
-
 #define rollLeft(x,y,mask) ((x<<y) | (x>>(nDim-y))) & mask
 #define rollRight(x,y,mask) ((x>>y) | (x<<(nDim-y))) & mask
 
-void init_sfc(SFC_INFO (*));
-int sfc_index(SFC_INFO, int (*));
-void sfc_coords(SFC_INFO, int, int (*));
+void init_sfc(ART_SFC_INFO *);
+int sfc_index(ART_SFC_INFO, int *);
+void sfc_coords(ART_SFC_INFO, int, int *);
 
 #ifdef __cplusplus
 }

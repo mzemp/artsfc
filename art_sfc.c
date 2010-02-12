@@ -10,21 +10,21 @@
 
 #include "art_sfc.h"
 
-void init_sfc(SFC_INFO *sfci) {
+void init_sfc(ART_SFC_INFO *asfci) {
 
-    int num_grid = sfci->num_grid;
+    int num_grid = asfci->num_grid;
 
-    sfci->nBitsPerDim = 0;
+    asfci->nBitsPerDim = 0;
     
     while ( num_grid >>= 1 ) {
-	sfci->nBitsPerDim++;
+	asfci->nBitsPerDim++;
 	}
     
-    sfci->nBits = sfci->nDim * sfci->nBitsPerDim;
-    sfci->max_sfc_index = 1 << sfci->nBits;
+    asfci->nBits = asfci->nDim * asfci->nBitsPerDim;
+    asfci->max_sfc_index = 1 << asfci->nBits;
     }
 
-int morton_index(SFC_INFO sfci, int *coords) {
+int morton_index(ART_SFC_INFO asfci, int *coords) {
 
     /* 
     ** purpose: interleaves the bits of the nDim integer
@@ -35,8 +35,8 @@ int morton_index(SFC_INFO sfci, int *coords) {
 
     int i, d;
     int mortonnumber = 0;
-    int nDim = sfci.nDim;
-    int nBitsPerDim = sfci.nBitsPerDim;
+    int nDim = asfci.nDim;
+    int nBitsPerDim = asfci.nBitsPerDim;
     int bitMask = 1 << (nBitsPerDim - 1);
 	
     /* interleave bits of coordinates */
@@ -49,7 +49,7 @@ int morton_index(SFC_INFO sfci, int *coords) {
     return mortonnumber;
     }
 
-int hilbert_index(SFC_INFO sfci, int *coords) {
+int hilbert_index(ART_SFC_INFO asfci, int *coords) {
 
     /* 
     ** purpose: calculates the 1-d space-filling-curve index
@@ -72,11 +72,11 @@ int hilbert_index(SFC_INFO sfci, int *coords) {
     int rho;
     int w;
     int interleaved;
-    int nDim = sfci.nDim;
-    int nBitsPerDim = sfci.nBitsPerDim;
+    int nDim = asfci.nDim;
+    int nBitsPerDim = asfci.nBitsPerDim;
 
     /* begin by transposing bits */
-    interleaved = morton_index(sfci,coords);
+    interleaved = morton_index(asfci,coords);
 
     /* mask out nDim and 1 bit blocks starting 
      * at highest order bits */
@@ -144,7 +144,7 @@ int hilbert_index(SFC_INFO sfci, int *coords) {
     return hilbertnumber;
     }
 
-void hilbert_coords(SFC_INFO sfci, int index, int *coords) {
+void hilbert_coords(ART_SFC_INFO asfci, int index, int *coords) {
 
     /*
     ** purpose: performs the inverse of sfc_index,
@@ -165,9 +165,9 @@ void hilbert_coords(SFC_INFO sfci, int index, int *coords) {
     int principal;
     int w;
     int x = 0;
-    int nDim = sfci.nDim;
-    int nBitsPerDim = sfci.nBitsPerDim;
-    int nBits = sfci.nBits;
+    int nDim = asfci.nDim;
+    int nBitsPerDim = asfci.nBitsPerDim;
+    int nBits = asfci.nBits;
 
     w = 0;
     sigma_ = 0;
@@ -228,9 +228,9 @@ void hilbert_coords(SFC_INFO sfci, int index, int *coords) {
 	}
     }
 
-int slab_index(SFC_INFO sfci, int *coords) {
+int slab_index(ART_SFC_INFO asfci, int *coords) {
 
-    int num_grid = sfci.num_grid;
+    int num_grid = asfci.num_grid;
 
 #if SLAB_DIM == 0
     return num_grid*num_grid*coords[0] + num_grid*coords[1] + coords[2];
@@ -241,9 +241,9 @@ int slab_index(SFC_INFO sfci, int *coords) {
 #endif
     }
 
-void slab_coords(SFC_INFO sfci, int index, int *coords) {
+void slab_coords(ART_SFC_INFO asfci, int index, int *coords) {
 
-    int num_grid = sfci.num_grid;
+    int num_grid = asfci.num_grid;
 
 #if SLAB_DIM == 0
     coords[2] = index % num_grid;
@@ -260,25 +260,25 @@ void slab_coords(SFC_INFO sfci, int index, int *coords) {
 #endif
     }
 
-int sfc_index(SFC_INFO sfci, int *coords) {
+int sfc_index(ART_SFC_INFO asfci, int *coords) {
 
-    switch (sfci.sfc_order) {
+    switch (asfci.sfc_order) {
     case SLAB:
-	return slab_index(sfci,coords);
+	return slab_index(asfci,coords);
     case MORTON:
     default:
-	return hilbert_index(sfci,coords);
+	return hilbert_index(asfci,coords);
 	}
     }
 
-void sfc_coords(SFC_INFO sfci, int index, int *coords) {
+void sfc_coords(ART_SFC_INFO asfci, int index, int *coords) {
 
-    switch (sfci.sfc_order) {
+    switch (asfci.sfc_order) {
     case SLAB:
-	slab_coords(sfci,index,coords);
+	slab_coords(asfci,index,coords);
 	break;
     case MORTON:
     default:
-	hilbert_coords(sfci,index,coords);
+	hilbert_coords(asfci,index,coords);
 	}
     }
