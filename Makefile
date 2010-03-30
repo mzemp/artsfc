@@ -5,7 +5,7 @@ SOURCES = art_sfc.c
 VERSION = 1.0
 
 CC	= gcc
-CFLAGS	= -O3 -mcmodel=medium -Wall -I$(LOCAL_LIB_PATH)/include
+CFLAGS	= -O3 -mcmodel=medium -Wall -pedantic -I$(LOCAL_LIB_PATH)/include
 LIBS	=
 
 # Rules
