@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "art_sfc.h"
+#include "artsfc.h"
 
 void init_sfc(ART_SFC_INFO *asfci) {
 
