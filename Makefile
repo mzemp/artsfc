@@ -1,24 +1,24 @@
-# Makefile for sfc functions
+# Makefile for artsfc library
 
-NAME	= art_sfc
-SOURCES = art_sfc.c
-VERSION = 1.0
+NAME	= artsfc
+VERSION	= $(shell git describe --tags --long)
 
-CC	= gcc
+CC		= gcc
 CFLAGS	= -O3 -mcmodel=medium -Wall -pedantic -I$(LOCAL_LIB_PATH)/include
 LIBS	=
 
+SRCS	= $(wildcard *.c)
+INCS	= $(wildcard *.h)
+OBJS	= $(SRCS:.c=.o)
+
 # Rules
 
-sfc:	$(SOURCES:.c=.o) $(SOURCES:.c=.h) Makefile
-	ar rcs lib$(NAME).a $(SOURCES:.c=.o) $(LIBS)
+$(NAME): $(OBJS) $(INCS) Makefile
+	ar rcs lib$(NAME).a $(OBJS) $(LIBS)
 
 clean:
-	-rm -f *~ *.o *.a
+	rm -f *~ *.o *.a
 
 install:
 	cd ../include; ln -sf ../$(NAME)/$(NAME).h .
 	cd ../lib; ln -sf ../$(NAME)/lib$(NAME).a .
-
-tar:
-	cd ..; tar cvf - $(NAME)/*.c $(NAME)/*.h $(NAME)/Makefile > $(NAME)-$(VERSION).tar
