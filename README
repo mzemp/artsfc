@@ -1,0 +1,42 @@
+DESCRIPTION
+
+This is a library containing some helper functions for the space filling curve algorithm needed by the ART format.
+
+
+AUTHORS
+
+Douglas Rudd <drudd@uchicago.edu> (original code)
+Marcel Zemp <marcelzemp@gmail.com> (adaption into a library)
+
+
+OFFICIAL SOURCE
+
+GitHub: https://github.com/mzemp/artsfc
+
+
+DEPENDENCIES
+
+iof library (https://github.com/mzemp/iof)
+
+
+COMPILATION & INSTALLATION
+
+First, make sure you have installed the iof library. The Makefile assumes that you have installed that in a local library path (e.g. ~/libraries/ under your home directory) and the following environment variable is set (e.g. in your .bashrc file):
+
+export LOCAL_LIB_PATH=~/libraries
+
+Then, clone or download the code from GitHub. In order to compile the code, just type make in the artsfc code directory:
+
+$> make
+
+This will generate a static library file called libartsfc.a. Other code can then be linked against this library.
+
+In order to clean up the code, type:
+
+$> make clean
+
+Assuming that the artsfc code directory is located within a local library directory (e.g. ~/libraries/ under your home directory) you can type:
+
+$> make install
+
+in the code directory. This will then generate symbolic links to the artsfc.h and libartsfc.a in the parallel directories ~/libraries/include/ and ~/libraries/lib/, respectively.
