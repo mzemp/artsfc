@@ -25,13 +25,13 @@ First, make sure you have installed the iof library. The Makefile assumes that y
 
 export LOCAL_LIB_PATH=~/libraries
 
-Then, clone or download the code from GitHub. In order to compile the code, just type make in the artsfc code directory:
+Then clone or download the code from GitHub. In order to compile the code just type make in the artsfc code directory:
 
 $> make
 
 This will generate a static library file called libartsfc.a. Other code can then be linked against this library.
 
-In order to clean up the code, type:
+In order to clean up the code type:
 
 $> make clean
 
