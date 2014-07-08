@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#define	SLAB		0
+#define SLAB		0
 #define MORTON		1
 #define HILBERT		2
 

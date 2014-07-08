@@ -12,273 +12,292 @@
 
 void init_sfc(ART_SFC_INFO *asfci) {
 
-    int num_grid = asfci->num_grid;
+	int num_grid = asfci->num_grid;
 
-    asfci->nBitsPerDim = 0;
-    
-    while ( num_grid >>= 1 ) {
-	asfci->nBitsPerDim++;
+	asfci->nBitsPerDim = 0;
+
+	while ( num_grid >>= 1 ) {
+		asfci->nBitsPerDim++;
+		}
+
+	asfci->nBits = asfci->nDim * asfci->nBitsPerDim;
+	asfci->max_sfc_index = 1 << asfci->nBits;
 	}
-    
-    asfci->nBits = asfci->nDim * asfci->nBitsPerDim;
-    asfci->max_sfc_index = 1 << asfci->nBits;
-    }
 
 int morton_index(ART_SFC_INFO asfci, int *coords) {
 
-    /* 
-    ** purpose: interleaves the bits of the nDim integer
-    ** coordinates, normally called Morton or z-ordering
-    **
-    ** Used by the hilbert curve algorithm
-    */
+	/*
+	** purpose: interleaves the bits of the nDim integer
+	** coordinates, normally called Morton or z-ordering
+	**
+	** Used by the hilbert curve algorithm
+	*/
 
-    int i, d;
-    int mortonnumber = 0;
-    int nDim = asfci.nDim;
-    int nBitsPerDim = asfci.nBitsPerDim;
-    int bitMask = 1 << (nBitsPerDim - 1);
-	
-    /* interleave bits of coordinates */
-    for ( i = nBitsPerDim; i > 0; i-- ) {
-	for ( d = 0; d < nDim; d++ ) {
-	    mortonnumber |= ( coords[d] & bitMask ) << (((nDim - 1) * i ) - d );
-	    }
-	bitMask >>= 1;
+	int i, d;
+	int mortonnumber = 0;
+	int nDim = asfci.nDim;
+	int nBitsPerDim = asfci.nBitsPerDim;
+	int bitMask = 1 << (nBitsPerDim - 1);
+
+	/*
+	** interleave bits of coordinates
+	*/
+	for ( i = nBitsPerDim; i > 0; i-- ) {
+		for ( d = 0; d < nDim; d++ ) {
+			mortonnumber |= ( coords[d] & bitMask ) << (((nDim - 1) * i ) - d );
+			}
+		bitMask >>= 1;
+		}
+	return mortonnumber;
 	}
-    return mortonnumber;
-    }
 
 int hilbert_index(ART_SFC_INFO asfci, int *coords) {
 
-    /* 
-    ** purpose: calculates the 1-d space-filling-curve index
-    ** corresponding to the nDim set of coordinates
-    **
-    ** Uses the Hilbert curve algorithm given in
-    ** Alternative Algorithm for Hilbert's Space-
-    ** 
-    ** Filling Curve, A.R. Butz, IEEE Trans on Comp.,
-    ** p. 424, 1971
-    */
+	/*
+	** purpose: calculates the 1-d space-filling-curve index
+	** corresponding to the nDim set of coordinates
+	**
+	** Uses the Hilbert curve algorithm given in
+	** Alternative Algorithm for Hilbert's Space-
+	**
+	** Filling Curve, A.R. Butz, IEEE Trans on Comp.,
+	** p. 424, 1971
+	*/
 
-    int i, j;
-    int hilbertnumber;
-    int singleMask;
-    int dimMask;
-    int numberShifts;
-    int principal;
-    int o;
-    int rho;
-    int w;
-    int interleaved;
-    int nDim = asfci.nDim;
-    int nBitsPerDim = asfci.nBitsPerDim;
+	int i, j;
+	int hilbertnumber;
+	int singleMask;
+	int dimMask;
+	int numberShifts;
+	int principal;
+	int o;
+	int rho;
+	int w;
+	int interleaved;
+	int nDim = asfci.nDim;
+	int nBitsPerDim = asfci.nBitsPerDim;
 
-    /* begin by transposing bits */
-    interleaved = morton_index(asfci,coords);
+	/*
+	** begin by transposing bits
+	*/
+	interleaved = morton_index(asfci,coords);
 
-    /* mask out nDim and 1 bit blocks starting 
-     * at highest order bits */
-    singleMask = 1 << ((nBitsPerDim - 1) * nDim);
-	
-    dimMask = singleMask;
-    for ( i = 1; i < nDim; i++ ) {
-	dimMask |= singleMask << i;
-	}
-
-    w = 0;
-    numberShifts = 0;
-    hilbertnumber = 0;
-
-    while (singleMask) {
-	o = (interleaved ^ w) & dimMask;
-	o = rollLeft( o, numberShifts, dimMask );
-
-	rho = o;
-	for ( j = 1; j < nDim; j++ ) {
-	    rho ^= (o>>j) & dimMask;
-	    }
-
-	hilbertnumber |= rho;
-
-	/* break out early (we already have complete number
-	 * no need to calculate other numbers) */
-	if ( singleMask == 1 ) {
-	    break;
-	    }
-
-	/* calculate principal position */
-	principal = 0;
+	/*
+	** mask out nDim and 1 bit blocks starting 
+	** at highest order bits
+	*/
+	singleMask = 1 << ((nBitsPerDim - 1) * nDim);
+	dimMask = singleMask;
 	for ( i = 1; i < nDim; i++ ) {
-	    if ( (hilbertnumber & singleMask) != ((hilbertnumber>>i) & singleMask)) {
-		principal = i; 
-		break;
+		dimMask |= singleMask << i;
 		}
-	    }
 
-	/* complement lowest bit position */
-	o ^= singleMask;
+	w = 0;
+	numberShifts = 0;
+	hilbertnumber = 0;
 
-	/* force even parity by complementing at principal position if necessary 
-	 * Note: lowest order bit of hilbertnumber gives you parity of o at this
-	 * point due to xor operations of previous steps */
-	if ( !(hilbertnumber & singleMask) ) {
-	    o ^= singleMask << principal;
-	    }
+	while (singleMask) {
+		o = (interleaved ^ w) & dimMask;
+		o = rollLeft( o, numberShifts, dimMask );
+		rho = o;
+		for ( j = 1; j < nDim; j++ ) {
+			rho ^= (o>>j) & dimMask;
+			}
 
-	/* rotate o right by numberShifts */
-	o = rollRight( o, numberShifts, dimMask );
+		hilbertnumber |= rho;
 
-	/* find next numberShifts */
-	numberShifts += (nDim - 1) - principal;
-	numberShifts %= nDim;
+		/*
+		** break out early (we already have complete number
+		** no need to calculate other numbers)
+		*/
+		if ( singleMask == 1 ) {
+			break;
+			}
 
-	w ^= o;
-	w >>= nDim;
+		/*
+		** calculate principal position
+		*/
+		principal = 0;
+		for ( i = 1; i < nDim; i++ ) {
+			if ( (hilbertnumber & singleMask) != ((hilbertnumber>>i) & singleMask)) {
+				principal = i; 
+				break;
+				}
+			}
 
-	singleMask >>= nDim;
-	dimMask >>= nDim;
+		/*
+		** complement lowest bit position
+		*/
+		o ^= singleMask;
+
+		/*
+		** force even parity by complementing at principal position if necessary 
+		** Note: lowest order bit of hilbertnumber gives you parity of o at this
+		** point due to xor operations of previous steps
+		*/
+		if ( !(hilbertnumber & singleMask) ) {
+			o ^= singleMask << principal;
+			}
+
+		/*
+		** rotate o right by numberShifts
+		*/
+		o = rollRight( o, numberShifts, dimMask );
+
+		/*
+		** find next numberShifts
+		*/
+		numberShifts += (nDim - 1) - principal;
+		numberShifts %= nDim;
+
+		w ^= o;
+		w >>= nDim;
+
+		singleMask >>= nDim;
+		dimMask >>= nDim;
+		}
+
+	return hilbertnumber;
 	}
-
-    return hilbertnumber;
-    }
 
 void hilbert_coords(ART_SFC_INFO asfci, int index, int *coords) {
 
-    /*
-    ** purpose: performs the inverse of sfc_index,
-    ** taking a 1-d space-filling-curve index
-    ** and transforming it into nDim coordinates
-    **
-    ** returns: the coordinates in coords
-    */
+	/*
+	** purpose: performs the inverse of sfc_index,
+	** taking a 1-d space-filling-curve index
+	** and transforming it into nDim coordinates
+	**
+	** returns: the coordinates in coords
+	*/
 
-    int i, j;
-    int dimMask;
-    int singleMask;
-    int sigma;
-    int sigma_;
-    int tau;
-    int tau_;
-    int num_shifts;
-    int principal;
-    int w;
-    int x = 0;
-    int nDim = asfci.nDim;
-    int nBitsPerDim = asfci.nBitsPerDim;
-    int nBits = asfci.nBits;
+	int i, j;
+	int dimMask;
+	int singleMask;
+	int sigma;
+	int sigma_;
+	int tau;
+	int tau_;
+	int num_shifts;
+	int principal;
+	int w;
+	int x = 0;
+	int nDim = asfci.nDim;
+	int nBitsPerDim = asfci.nBitsPerDim;
+	int nBits = asfci.nBits;
 
-    w = 0;
-    sigma_ = 0;
-    num_shifts = 0;
+	w = 0;
+	sigma_ = 0;
+	num_shifts = 0;
 
-    singleMask = 1 << ((nBitsPerDim - 1) * nDim);
+	singleMask = 1 << ((nBitsPerDim - 1) * nDim);
 
-    dimMask = singleMask;
-    for ( i = 1; i < nDim; i++ ) {
-	dimMask |= singleMask << i;
-        }
-
-    for ( i = 0; i < nBitsPerDim; i++ ) {
-	sigma = ((index & dimMask) ^ ( (index & dimMask) >> 1 )) & dimMask;
-	sigma_ |= rollRight( sigma, num_shifts, dimMask );
-
-	principal = nDim - 1;
-	for ( j = 1; j < nDim; j++ ) {
-	    if ( (index & singleMask) != ((index >> j) & singleMask) ) {
-		principal = nDim - j - 1;
-		break;
+	dimMask = singleMask;
+	for ( i = 1; i < nDim; i++ ) {
+		dimMask |= singleMask << i;
 		}
-	    }
 
-	/* complement nth bit */
-	tau = sigma ^ singleMask;
+	for ( i = 0; i < nBitsPerDim; i++ ) {
+		sigma = ((index & dimMask) ^ ( (index & dimMask) >> 1 )) & dimMask;
+		sigma_ |= rollRight( sigma, num_shifts, dimMask );
+		principal = nDim - 1;
+		for ( j = 1; j < nDim; j++ ) {
+			if ( (index & singleMask) != ((index >> j) & singleMask) ) {
+				principal = nDim - j - 1;
+				break;
+				}
+			}
 
-	/* if even parity, complement in principal bit position */
-	if ( !(index & singleMask) ) {
-	    tau ^= singleMask << ( nDim - principal - 1 ); 
-	    }
+		/*
+		** complement nth bit
+		*/
+		tau = sigma ^ singleMask;
 
-	tau_ = rollRight( tau, num_shifts, dimMask );
+		/*
+		** if even parity, complement in principal bit position
+		*/
+		if ( !(index & singleMask) ) {
+			tau ^= singleMask << ( nDim - principal - 1 ); 
+			}
 
-	num_shifts += principal;
-	num_shifts %= nDim;
+		tau_ = rollRight( tau, num_shifts, dimMask );
 
-	w |= ((w & dimMask) ^ tau_) >> nDim;
+		num_shifts += principal;
+		num_shifts %= nDim;
 
-	dimMask >>= nDim;
-	singleMask >>= nDim;
-	}
+		w |= ((w & dimMask) ^ tau_) >> nDim;
 
-    x = w ^ sigma_;
-
-    /* undo bit interleaving to get coordinates */
-    for ( i = 0; i < nDim; i++ ) {
-	coords[i] = 0;
-
-	singleMask = 1 << (nBits - 1 - i);
-
-	for ( j = 0; j < nBitsPerDim; j++ ) {
-	    if ( x & singleMask ) {
-		coords[i] |= 1 << (nBitsPerDim-j-1);
+		dimMask >>= nDim;
+		singleMask >>= nDim;
 		}
-	    singleMask >>= nDim;
-	    }
+
+	x = w ^ sigma_;
+
+	/*
+	** undo bit interleaving to get coordinates
+	*/
+	for ( i = 0; i < nDim; i++ ) {
+		coords[i] = 0;
+		singleMask = 1 << (nBits - 1 - i);
+		for ( j = 0; j < nBitsPerDim; j++ ) {
+			if ( x & singleMask ) {
+				coords[i] |= 1 << (nBitsPerDim-j-1);
+				}
+			singleMask >>= nDim;
+			}
+		}
 	}
-    }
 
 int slab_index(ART_SFC_INFO asfci, int *coords) {
 
-    int num_grid = asfci.num_grid;
+	int num_grid = asfci.num_grid;
 
 #if SLAB_DIM == 0
-    return num_grid*num_grid*coords[0] + num_grid*coords[1] + coords[2];
+	return num_grid*num_grid*coords[0] + num_grid*coords[1] + coords[2];
 #elif SLAB_DIM == 1
-    return num_grid*num_grid*coords[1] + num_grid*coords[0] + coords[2];
+	return num_grid*num_grid*coords[1] + num_grid*coords[0] + coords[2];
 #else
-    return num_grid*num_grid*coords[2] + num_grid*coords[0] + coords[1];
+	return num_grid*num_grid*coords[2] + num_grid*coords[0] + coords[1];
 #endif
-    }
+	}
 
 void slab_coords(ART_SFC_INFO asfci, int index, int *coords) {
 
-    int num_grid = asfci.num_grid;
+	int num_grid = asfci.num_grid;
 
 #if SLAB_DIM == 0
-    coords[2] = index % num_grid;
-    coords[1] = ((index - coords[2] )/num_grid) % num_grid;
-    coords[0] = (index - coords[2] - num_grid*coords[1])/(num_grid*num_grid);
+	coords[2] = index % num_grid;
+	coords[1] = ((index - coords[2] )/num_grid) % num_grid;
+	coords[0] = (index - coords[2] - num_grid*coords[1])/(num_grid*num_grid);
 #elif SLAB_DIM == 1
-    coords[2] = index % num_grid;
-    coords[0] = ((index - coords[2] )/num_grid) % num_grid;
-    coords[1] = (index - coords[2] - num_grid*coords[0])/(num_grid*num_grid);
+	coords[2] = index % num_grid;
+	coords[0] = ((index - coords[2] )/num_grid) % num_grid;
+	coords[1] = (index - coords[2] - num_grid*coords[0])/(num_grid*num_grid);
 #else
-    coords[1] = index % num_grid;
-    coords[0] = ((index - coords[1] )/num_grid) % num_grid;
-    coords[2] = (index - coords[1] - num_grid*coords[0])/(num_grid*num_grid);
+	coords[1] = index % num_grid;
+	coords[0] = ((index - coords[1] )/num_grid) % num_grid;
+	coords[2] = (index - coords[1] - num_grid*coords[0])/(num_grid*num_grid);
 #endif
-    }
+	}
 
 int sfc_index(ART_SFC_INFO asfci, int *coords) {
 
-    switch (asfci.sfc_order) {
-    case SLAB:
-	return slab_index(asfci,coords);
-    case MORTON:
-    default:
-	return hilbert_index(asfci,coords);
+	switch (asfci.sfc_order) {
+	case SLAB:
+		return slab_index(asfci,coords);
+	case MORTON:
+	default:
+		return hilbert_index(asfci,coords);
+		}
 	}
-    }
 
 void sfc_coords(ART_SFC_INFO asfci, int index, int *coords) {
 
-    switch (asfci.sfc_order) {
-    case SLAB:
-	slab_coords(asfci,index,coords);
-	break;
-    case MORTON:
-    default:
-	hilbert_coords(asfci,index,coords);
+	switch (asfci.sfc_order) {
+	case SLAB:
+		slab_coords(asfci,index,coords);
+		break;
+	case MORTON:
+	default:
+		hilbert_coords(asfci,index,coords);
+		}
 	}
-    }
